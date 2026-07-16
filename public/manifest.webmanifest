@@ -1,0 +1,16 @@
+{
+  "name": "M HQ War Council",
+  "short_name": "M HQ",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0e0b08",
+  "theme_color": "#17110b",
+  "description": "Travian alliance command center for M.",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

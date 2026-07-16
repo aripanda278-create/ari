@@ -1,0 +1,20 @@
+M HQ — ALLIANCE COMMAND FINAL
+
+POPRAVLJENO I DODANO:
+- OWNER Pacov se određuje preko Google računa aripanda278@gmail.com
+- pravi modul Članovi M, klikabilan s dashboarda i iz izbornika
+- pretraga/sortiranje članova i fokus njihovih sela na karti
+- filteri: samo M, samo [M], samo SC, M+[M], M+[M]+SC
+- svi drugi savezi i dalje ostaju dostupni na karti
+- vedrija, šarenija Alliance Command tema
+- originalne ilustracije Gala i rimske legije sa strane
+- gumb sunce/mjesec za svijetliji ili tamniji prikaz
+- postojeći Firebase podaci, rezervacije, diplomacija, operacije i admini ostaju
+
+OBJAVA:
+1. Raspakiraj ZIP.
+2. Otvori raspakiranu mapu.
+3. U adresnu traku upiši cmd.
+4. Pokreni: firebase deploy
+5. Otvori https://travian-m-hq.web.app
+6. Pritisni Ctrl+F5.
