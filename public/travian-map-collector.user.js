@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         M HQ Travian Map Collector
 // @namespace    https://aripanda278-create.github.io/ari/
-// @version      1.0.0
-// @description  Collects oasis and cropper tiles already loaded by the normal Travian map.
+// @version      1.1.0
+// @description  Collects oases and all resource-field types already loaded by the normal Travian map.
 // @match        https://*.travian.com/*
 // @run-at       document-start
 // @grant        none
@@ -24,14 +24,13 @@
   function classify(v){
     if(Array.isArray(v)){
       const x=Number(v[0]),y=Number(v[1]),field=Number(v[2]),land=Number(v[3]);if(!valid(x,y))return null;
-      if(field===1)return{x,y,kind:"cropper9",bonuses:{},rawClass:`legacy-field-${field}`,rawTitle:""};
-      if(field===6)return{x,y,kind:"cropper15",bonuses:{},rawClass:`legacy-field-${field}`,rawTitle:""};
+      if(field>=1&&field<=12)return{x,y,kind:`field${field}`,bonuses:{},rawClass:`legacy-field-${field}`,rawTitle:""};
       if(field===0&&[3,6,9,10,11,12].includes(land)){const b={};if(land===3)b.wood=25;else if(land===6)b.clay=25;else if(land===9)b.iron=25;else if(land===12)b.crop=50;return{x,y,kind:"oasis",bonuses:b,rawClass:`legacy-oasis-${land}`,rawTitle:""}}
       return null;
     }
     if(!v||typeof v!=="object")return null;const x=Number(v.x),y=Number(v.y);if(!valid(x,y))return null;
     const rawClass=text(v.c||v.className||v.tileClass||v.type),rawTitle=text(v.t||v.title||v.tooltip||v.html),raw=`${rawClass} ${rawTitle}`,field=Number(v.fieldType??v.fieldComposition??NaN),land=Number(v.oasisType??v.landscapeType??NaN);let kind="";
-    if(field===6)kind="cropper15";else if(field===1)kind="cropper9";
+    if(field>=1&&field<=12)kind=`field${field}`;
     else if(v.isOasis===true||Number.isFinite(land))kind="oasis";
     else if(/\{k\.f6\}|(?:^|\D)15c(?:\D|$)|cropper.?15/i.test(raw))kind="cropper15";
     else if(/\{k\.f1\}|(?:^|\D)9c(?:\D|$)|cropper.?9/i.test(raw))kind="cropper9";
