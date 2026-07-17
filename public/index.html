@@ -1,176 +1,74 @@
 <!doctype html>
 <html lang="hr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#17110b"><title>M HQ — Alliance Command</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f1e8">
+  <title>M HQ</title>
+  <link rel="icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="embers" aria-hidden="true"></div><img class="warriorArt gaulArt" src="gaul-warrior.svg" alt=""><img class="warriorArt romanArt" src="roman-legion.svg" alt="">
-<section id="gate">
-  <div class="gatebox">
-    <div class="crest">M</div>
-    <p class="eyebrow">TRAVIAN ALLIANCE COMMAND</p>
-    <h1>M HQ <span>Alliance Command</span></h1>
-    <p class="mut" data-i18n="gateText">Uđi kao član ili se prijavi Google računom za upravljačke ovlasti.</p>
-    <div class="field"><label data-i18n="avatar">Avatar ime</label><input id="avatarInput" maxlength="40" autocomplete="nickname" placeholder="Pacov"></div>
-    <div class="field"><label data-i18n="language">Jezik</label><select id="languageInput"><option value="hr">Hrvatski</option><option value="en">English</option><option value="pl">Polski</option><option value="ru">Русский</option><option value="es">Español</option></select></div>
-    <div class="gateActions"><button id="enterBtn" class="primary" data-i18n="enterMember">Uđi kao član</button><button id="googleBtn" class="google">G Google prijava</button></div>
-    <p class="tiny">Pacov koristi Google prijavu i dobiva OWNER ovlasti. Članovi mogu ući bez e-maila i lozinke.</p>
-    <p id="gateStatus" class="status"></p>
-  </div>
-</section>
-
-<div id="app" class="hidden">
-<header>
-  <div class="brand"><div class="miniCrest">M</div><div><h1>M HQ <span>Alliance Command</span></h1><span id="sync" class="sync">Povezivanje…</span></div></div>
-  <div class="headerRight"><div id="onlineUsers" class="presence"></div>
-    <button id="visualMode" title="Promijeni svjetlinu">☀</button><select id="langTop"><option value="hr">HR</option><option value="en">EN</option><option value="pl">PL</option><option value="ru">RU</option><option value="es">ES</option></select><button id="accountBtn"><span id="roleBadge" class="role member">MEMBER</span> <span id="me"></span></button></div>
-</header>
-<div class="layout">
-<nav>
-  <div class="navTitle">WAR TABLE</div>
-  <button class="active" data-view="dashboard">◈ <span data-i18n="dashboard">Pregled</span></button>
-  <button data-view="map">⌖ <span data-i18n="map">Karta</span></button>
-<button data-view="members">♟ <span data-i18n="members">Članovi M</span></button>
-  <button data-view="reservations">⚑ <span data-i18n="reservations">Rezervacije</span></button>
-  <button data-view="diplomacy">⚖ <span data-i18n="diplomacy">Diplomacija</span></button>
-  <button data-view="operations">⚔ <span data-i18n="operations">Operacije</span></button>
-  <button data-view="activity">☷ <span data-i18n="activity">Aktivnost</span></button>
-<button data-view="intel">◉ <span>Alliance Intel</span></button>
-  <button id="adminNav" data-view="admin" class="hidden">♛ <span data-i18n="administration">Administracija</span></button>
-  <div class="navFoot"><b>M</b> · OWN · Pacov<br><b>[M]</b> · ALLY · Rat<br><b>SC</b> · NAP</div>
-</nav>
-<main>
-<section id="dashboard" class="view active">
-  <div class="hero"><div><p class="eyebrow">ALLIANCE STATUS</p><h2 data-i18n="commandOverview">Pregled zapovjedništva</h2><p class="mut">International 4 · M Alliance</p></div><div class="shield">⚔</div></div>
-  <div class="cards"><button class="card metric metricButton" data-open-view="members"><span data-i18n="members">Članovi M</span><b id="kMembers"></b><small>Otvori popis</small></button><div class="card metric"><span data-i18n="villages">Sela M</span><b id="kVillages"></b></div><div class="card metric"><span data-i18n="population">Populacija</span><b id="kPop"></b></div><div class="card metric"><span data-i18n="activeReservations">Aktivne rezervacije</span><b id="kRes"></b></div><div class="card metric"><span data-i18n="online">Online</span><b id="kOnline"></b></div></div>
-  <div class="cards strategicCards">
-      <div class="card metric"><span>Savezi na serveru</span><b id="kAlliances"></b></div>
-      <div class="card metric"><span>Vanjska sela u radijusu 55</span><b id="kExternalNear"></b></div>
-      <div class="card metric"><span>Enemy sela</span><b id="kEnemyVillages"></b></div>
-      <div class="card metric"><span>Aktivne operacije</span><b id="kActiveOps"></b></div>
+  <section id="gate" class="gate">
+    <div class="gate-card">
+      <div class="brand-mark">M</div>
+      <p class="eyebrow" data-t="allianceCommand">ALLIANCE COMMAND</p>
+      <h1>M HQ</h1>
+      <p class="lead" data-t="loginIntro">Jedno mjesto za kartu, savez, planove i operacije.</p>
+      <label><span data-t="avatar">Avatar ime</span><input id="avatarInput" autocomplete="nickname" placeholder="Pacov"></label>
+      <label><span data-t="language">Jezik</span><select id="languageInput"><option value="hr">Hrvatski</option><option value="en">English</option></select></label>
+      <div class="gate-actions">
+        <button id="memberLogin" class="primary" data-t="enterMember">Uđi kao član</button>
+        <button id="googleLogin" class="secondary" data-t="googleLogin">Google prijava</button>
+      </div>
+      <p id="gateStatus" class="status"></p>
     </div>
-    <div class="grid2"><div class="card"><h3 data-i18n="relations">Diplomatski odnosi</h3><div id="dipSummary"></div></div><div class="card"><h3 data-i18n="latestChanges">Zadnje promjene</h3><div id="latest" class="timeline"></div></div></div>
-</section>
+  </section>
 
-
-<section id="members" class="view">
-  <div class="sectionHead">
-    <div><p class="eyebrow">M ALLIANCE ROSTER</p><h2>Članovi M</h2></div>
-    <div class="toolbar compact"><input id="memberSearch" placeholder="Traži igrača"><select id="memberSort">
-      <option value="pop">Populacija</option><option value="villages">Broj sela</option><option value="name">Ime</option>
-    </select></div>
-  </div>
-  <div class="cards">
-    <div class="card metric"><span>Ukupno članova</span><b id="memberTotal"></b></div>
-    <div class="card metric"><span>Ukupno sela</span><b id="memberVillageTotal"></b></div>
-    <div class="card metric"><span>Prosjek populacije</span><b id="memberAvgPop"></b></div>
-    <div class="card metric"><span>Najveći član</span><b id="memberTop"></b></div>
-  </div>
-  <div class="memberLayout">
-    <div class="tablewrap"><table><thead><tr>
-      <th>Igrač</th><th>Pleme</th><th>Sela</th><th>Populacija</th><th>Prosjek sela</th><th>Glavno selo</th>
-    </tr></thead><tbody id="memberBody"></tbody></table></div>
-    <aside class="card memberDetail"><h3>Profil člana</h3><div id="memberDetail" class="mut">Klikni člana u tablici.</div>
-      <button id="focusMember" class="primary hidden">Prikaži na karti</button></aside>
-  </div>
-</section>
-
-<section id="map" class="view">
-  <div class="sectionHead"><div><p class="eyebrow">STRATEGIC MAP</p><h2 data-i18n="map">Karta</h2></div></div>
-  <div class="toolbar mapToolbar">
-    <input id="search" data-i18n-placeholder="search" placeholder="Igrač, selo, savez ili x|y">
-    <select id="mapScope">
-      <option value="cluster">Područje M</option>
-      <option value="world">Cijeli server</option>
-    </select>
-    <button id="applyMap" class="primary" data-i18n="apply">Primijeni</button>
-    <button id="resetLayers">Reset slojeva</button><button id="exportMap">Izvezi prikaz CSV</button>
-  </div>
-  <div class="quickFilters">
-    <button data-preset="all">Svi savezi</button>
-    <button data-preset="ours">Samo M</button>
-    <button data-preset="allyOnly">Samo [M]</button>
-    <button data-preset="napOnly">Samo SC</button>
-    <button data-preset="oursAlly">M + [M]</button>
-    <button data-preset="friends">M + [M] + SC</button>
-    <button data-preset="external">Samo vanjski</button>
-    <button data-preset="enemies">Samo ENEMY</button>
-    <button data-preset="none">Sakrij sve</button>
-  </div>
-  <div class="mapgrid mapgridLayers">
-    <div id="mapwrap"><svg id="svg"></svg><div id="tip" class="tip"></div></div>
-    <aside>
-      <div class="card"><h3 data-i18n="selectedVillage">Odabrano selo</h3><div id="selected" class="mut">—</div><button id="reserveSelected" class="primary hidden" style="width:100%;margin-top:12px">⚑ Rezerviraj koordinate</button></div>
-      <div class="card legend"><span><i class="dot own"></i>M</span><span><i class="dot ally"></i>[M] ALLY</span><span><i class="dot nap"></i>SC NAP</span><span><i class="dot enemy"></i>ENEMY</span><span><i class="dot neutral"></i>NEUTRAL</span></div>
-      <div class="card allianceIntel">
-        <div class="layerHead"><h3>Alliance intelligence</h3><button id="clearAllianceIntel" class="iconBtn">×</button></div>
-        <div id="allianceIntel" class="mut">Klikni savez u popisu slojeva.</div>
-        <div id="allianceIntelActions" class="intelActions hidden">
-          <button id="focusAlliance" class="primary">Fokusiraj</button>
-          <button id="favoriteAlliance">☆ Prati</button>
-          <button id="hideAlliance">Sakrij</button>
-        </div>
-        <div id="adminRelationActions" class="relationActions adminOnly hidden">
-          <button data-setrel="ally">ALLY</button><button data-setrel="nap">NAP</button>
-          <button data-setrel="enemy">ENEMY</button><button data-setrel="neutral">NEUTRAL</button>
-        </div>
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <button id="menuToggle" class="icon-button mobile-only" aria-label="Menu">☰</button>
+      <a class="brand" href="#dashboard"><span class="brand-mark small">M</span><span><b>M HQ</b><small data-t="allianceCommand">ALLIANCE COMMAND</small></span></a>
+      <div class="server-state"><i></i><span data-t="liveData">Server podaci</span><b id="dataAge">—</b></div>
+      <div class="top-actions">
+        <button id="globalSearchButton" class="search-button"><span>⌕</span><span data-t="search">Traži igrača, savez ili koordinate</span><kbd>/</kbd></button>
+        <select id="languageTop" aria-label="Language"><option value="hr">HR</option><option value="en">EN</option></select>
+        <button id="themeToggle" class="icon-button" aria-label="Theme">◐</button>
+        <button id="profileButton" class="profile-button"><span id="profileInitial">M</span><span><b id="profileName">—</b><small id="profileRole">MEMBER</small></span></button>
       </div>
-      <div class="card layerPanel">
-        <div class="layerHead"><h3>Slojevi saveza</h3><span id="visibleAllianceCount" class="badge">0</span></div>
-        <input id="allianceSearch" placeholder="Traži savez...">
-        <label class="layerSpecial"><input type="checkbox" id="showNoAlliance" checked> Igrači bez saveza</label>
-        <label class="layerSpecial"><input type="checkbox" id="showNatars" checked> Natari</label>
-        <div id="allianceLayers" class="allianceLayers"></div>
-      </div>
+    </header>
+
+    <aside id="sidebar" class="sidebar">
+      <nav id="mainNav">
+        <p data-t="workspace">RADNI PROSTOR</p>
+        <button data-view="dashboard" class="active"><span>⌂</span><b data-t="dashboard">Pregled</b></button>
+        <button data-view="map"><span>⌖</span><b data-t="map">Karta</b></button>
+        <button data-view="alliance"><span>♙</span><b data-t="alliance">Savez</b></button>
+        <button data-view="plans"><span>◎</span><b data-t="plans">Planeri</b></button>
+        <button data-view="tools"><span>⌁</span><b data-t="tools">Alati</b></button>
+        <p data-t="coordination">KOORDINACIJA</p>
+        <button data-view="operations"><span>⚔</span><b data-t="operations">Operacije</b></button>
+        <button data-view="reports"><span>▤</span><b data-t="reports">Izvještaji</b></button>
+        <button data-view="diplomacy"><span>⚑</span><b data-t="diplomacy">Diplomacija</b></button>
+      </nav>
+      <div class="sidebar-foot"><span id="worldName">ts4.x1</span><small data-t="world">Travian svijet</small></div>
     </aside>
+
+    <main id="content">
+      <section id="dashboard" class="view active"></section>
+      <section id="map" class="view"></section>
+      <section id="alliance" class="view"></section>
+      <section id="plans" class="view"></section>
+      <section id="tools" class="view"></section>
+      <section id="operations" class="view"></section>
+      <section id="reports" class="view"></section>
+      <section id="diplomacy" class="view"></section>
+    </main>
   </div>
-</section>
 
-<section id="reservations" class="view">
-  <div class="sectionHead"><div><p class="eyebrow">SETTLING COMMAND</p><h2 data-i18n="reservations">Rezervacije</h2></div><span id="resPermission" class="notice"></span></div>
-  <div class="grid2"><div class="card"><div class="formgrid"><div><label>X</label><input id="rx" type="number"></div><div><label>Y</label><input id="ry" type="number"></div><div><label data-i18n="player">Igrač</label><input id="rplayer"></div><div><label data-i18n="type">Vrsta</label><select id="rtype"><option>15c</option><option>9c</option><option value="normal">Obično selo</option><option value="strategic">Strateška točka</option></select></div><div><label data-i18n="priority">Prioritet</label><select id="rpriority"><option value="high">Visok</option><option value="medium">Srednji</option><option value="low">Nizak</option></select></div><div><label data-i18n="status">Status</label><select id="rstatus"><option value="planned">Planirano</option><option value="confirmed">Potvrđeno</option><option value="settled">Osnovano</option></select></div></div><label class="mut" data-i18n="note">Bilješka</label><textarea id="rnote"></textarea><button id="saveRes" class="primary" data-i18n="save">Spremi</button></div><div class="card"><h3 data-i18n="locationCheck">Provjera lokacije</h3><div id="locCheck" class="mut">—</div></div></div>
-  <div class="tablewrap"><table><thead><tr><th data-i18n="coordinates">Koordinate</th><th data-i18n="player">Igrač</th><th data-i18n="type">Vrsta</th><th data-i18n="priority">Prioritet</th><th data-i18n="status">Status</th><th data-i18n="editedBy">Uredio</th><th></th></tr></thead><tbody id="resBody"></tbody></table></div>
-</section>
-
-<section id="diplomacy" class="view"><div class="sectionHead"><div><p class="eyebrow">FOREIGN AFFAIRS</p><h2 data-i18n="diplomacy">Diplomacija</h2></div></div><div id="dipEditor" class="card adminOnly"><div class="formgrid"><div><label data-i18n="allianceTag">Oznaka saveza</label><input id="dipTag"></div><div><label data-i18n="relation">Odnos</label><select id="dipRel"><option value="ally">ALLY</option><option value="nap">NAP</option><option value="enemy">ENEMY</option><option value="neutral">NEUTRAL</option></select></div></div><label class="mut" data-i18n="note">Bilješka</label><textarea id="dipNote"></textarea><button id="saveDip" class="primary" data-i18n="save">Spremi</button></div><div class="tablewrap"><table><thead><tr><th data-i18n="allianceTag">Oznaka</th><th data-i18n="relation">Odnos</th><th data-i18n="note">Bilješka</th><th data-i18n="editedBy">Uredio</th></tr></thead><tbody id="dipBody"></tbody></table></div></section>
-
-<section id="operations" class="view"><div class="sectionHead"><div><p class="eyebrow">MILITARY OPERATIONS</p><h2 data-i18n="operations">Operacije</h2></div></div><div id="opEditor" class="card adminOnly"><div class="formgrid"><div><label data-i18n="name">Naziv</label><input id="opName"></div><div><label data-i18n="type">Vrsta</label><select id="opType"><option value="attack">Napad</option><option value="defense">Obrana</option><option value="artifact">Artefakt</option><option value="ww">WW</option></select></div><div><label data-i18n="time">Vrijeme</label><input id="opTime" type="datetime-local"></div><div><label data-i18n="status">Status</label><select id="opStatus"><option value="draft">Draft</option><option value="active">Aktivno</option><option value="done">Završeno</option></select></div></div><label class="mut" data-i18n="participants">Sudionici</label><input id="opPlayers" style="width:100%"><label class="mut" data-i18n="note">Bilješka</label><textarea id="opNote"></textarea><button id="saveOp" class="primary" data-i18n="save">Spremi</button></div><div class="tablewrap"><table><thead><tr><th data-i18n="name">Naziv</th><th data-i18n="type">Vrsta</th><th data-i18n="time">Vrijeme</th><th data-i18n="status">Status</th><th data-i18n="editedBy">Uredio</th><th></th></tr></thead><tbody id="opBody"></tbody></table></div></section>
-
-
-<section id="intel" class="view">
-  <div class="sectionHead"><div><p class="eyebrow">SERVER INTELLIGENCE</p><h2>Alliance Intel</h2></div>
-    <div class="toolbar compact"><input id="intelSearch" placeholder="Traži savez"><select id="intelRelation">
-      <option value="all">Svi odnosi</option><option value="own">OWN</option><option value="ally">ALLY</option>
-      <option value="nap">NAP</option><option value="enemy">ENEMY</option><option value="neutral">NEUTRAL</option>
-    </select></div>
-  </div>
-  <div class="cards">
-    <div class="card metric"><span>Praćeni savezi</span><b id="kFavorites">0</b></div>
-    <div class="card metric"><span>Najveći vanjski savez</span><b id="kLargestExternal">—</b></div>
-    <div class="card metric"><span>Najbliži vanjski klaster</span><b id="kNearestExternal">—</b></div>
-  </div>
-  <div class="tablewrap"><table><thead><tr>
-    <th>Prati</th><th>Savez</th><th>Odnos</th><th>Igrači</th><th>Sela</th><th>Populacija</th><th>Prosjek</th><th>Udaljenost od M</th><th></th>
-  </tr></thead><tbody id="intelBody"></tbody></table></div>
-</section>
-
-<section id="activity" class="view"><div class="sectionHead"><div><p class="eyebrow">AUDIT TRAIL</p><h2 data-i18n="activity">Aktivnost</h2></div></div><div class="tablewrap"><table><thead><tr><th data-i18n="time">Vrijeme</th><th data-i18n="avatar">Avatar</th><th data-i18n="action">Radnja</th></tr></thead><tbody id="activityBody"></tbody></table></div></section>
-
-<section id="admin" class="view"><div class="sectionHead"><div><p class="eyebrow">HIGH COUNCIL</p><h2 data-i18n="administration">Administracija</h2></div><span class="notice ownerOnly">Samo Owner može dodjeljivati admine.</span></div><div class="card"><h3>Korisnici i ovlasti</h3><p class="mut">Admin mora barem jednom ući Google prijavom kako bi se pojavio na popisu.</p><div class="tablewrap adminTable"><table><thead><tr><th>Avatar</th><th>E-mail / račun</th><th>Uloga</th><th>Zadnji pristup</th><th>Akcija</th></tr></thead><tbody id="usersBody"></tbody></table></div></div></section>
-<section id="tools" class="view">
-  <div class="sectionHead"><div><p class="eyebrow">STRATEGIC TOOLKIT</p><h2>Strateški alati</h2><p class="mut">Kalkulatori i planeri povezani s kartom.</p></div></div>
-  <div class="toolTabs"><button class="active" data-tool="travelTool">Vrijeme putovanja</button><button data-tool="cropTool">Crop & farm finder</button><button data-tool="troopTool">Evidencija vojske</button><button data-tool="plannerTool">Attack / Defense</button><button data-tool="converterTool">Konverter</button></div>
-  <div id="travelTool" class="toolPanel active"><div class="grid2"><div class="card toolCard"><h3>Odakle i kamo</h3><p class="mut">Upiši koordinate ili odaberi sela izravno na karti.</p><div class="coordinatePair"><div><label>Polazište X|Y</label><div class="inline"><input id="fromCoord" placeholder="-12|34"><button id="pickFrom">Odaberi na karti</button></div></div><div><label>Cilj X|Y</label><div class="inline"><input id="toCoord" placeholder="45|-6"><button id="pickTo">Odaberi na karti</button></div></div></div><div class="formgrid"><div><label>Jedinica</label><select id="unitSelect"></select></div><div><label>Brzina turnira (%)</label><input id="tournamentBonus" type="number" min="0" max="400" value="0"></div><div><label>Bonus brzine (%)</label><input id="speedBonus" type="number" min="0" max="200" value="0"></div><div><label>Vrijeme udara</label><input id="arrivalAt" type="datetime-local"></div></div><button id="calculateTravel" class="primary">Izračunaj putovanje</button></div><div id="travelResult" class="card resultCard"><div class="emptyState">Rezultat prikazuje udaljenost, trajanje, polazak i povratak.</div></div></div></div>
-  <div id="cropTool" class="toolPanel"><div class="grid2"><div class="card"><h3>Crop & Farm Finder</h3><p class="mut">Traži slobodne lokacije, rezervirane croppere i slabije vanjske mete u blizini.</p><div class="formgrid"><div><label>Centar X|Y</label><input id="cropCenter" placeholder="0|0"></div><div><label>Radijus</label><input id="cropRadius" type="number" value="25" min="1" max="200"></div><div><label>Prikaz</label><select id="cropType"><option value="free">Slobodne lokacije</option><option value="15c">Označeni 15c</option><option value="9c">Označeni 9c</option><option value="farms">Moguće farme</option></select></div></div><button id="findCrops" class="primary">Analiziraj područje</button></div><div id="cropResults" class="card"><div class="emptyState">Rezultati će se pojaviti ovdje.</div></div></div></div>
-  <div id="troopTool" class="toolPanel"><div class="card"><div class="sectionHead"><div><h3>Evidencija vojske saveza M</h3><p class="mut">Map podaci ne sadrže vojsku. Ovdje se unose provjerene brojke; ostaju u ovom pregledniku.</p></div><button id="exportTroops">Izvezi CSV</button></div><div class="formgrid"><div><label>Igrač</label><select id="troopPlayer"></select></div><div><label>Tip</label><select id="troopRole"><option value="off">OFF</option><option value="def">DEF</option><option value="mixed">MIXED</option></select></div><div><label>Pješadija</label><input id="troopInf" type="number" min="0"></div><div><label>Konjica</label><input id="troopCav" type="number" min="0"></div><div><label>Opsadne</label><input id="troopSiege" type="number" min="0"></div><div><label>Izviđači</label><input id="troopScout" type="number" min="0"></div></div><button id="saveTroops" class="primary">Spremi provjereni unos</button><div id="troopSummary" class="cards miniCards"></div><div class="tablewrap"><table><thead><tr><th>Igrač</th><th>Uloga</th><th>Pješadija</th><th>Konjica</th><th>Opsadne</th><th>Izviđači</th><th>Ukupno</th><th></th></tr></thead><tbody id="troopBody"></tbody></table></div></div></div>
-  <div id="plannerTool" class="toolPanel"><div class="grid2"><div class="card"><h3>Attack / Defense Planner</h3><div class="formgrid"><div><label>Naziv</label><input id="planName"></div><div><label>Vrsta</label><select id="planType"><option value="real">Pravi napad</option><option value="fake">Fake</option><option value="defense">Obrana</option><option value="supply">Opskrba / WW</option></select></div><div><label>Polazište</label><input id="planFrom" placeholder="x|y"></div><div><label>Cilj</label><input id="planTo" placeholder="x|y"></div><div><label>Jedinica</label><select id="planUnit"></select></div><div><label>Željeni dolazak</label><input id="planArrival" type="datetime-local"></div><div><label>Količina</label><input id="planAmount" type="number" min="0"></div><div><label>Igrač</label><input id="planPlayer"></div></div><button id="addPlan" class="primary">Dodaj u vremensku crtu</button></div><div class="card"><h3>Koordinirana vremenska crta</h3><div id="planTimeline" class="timeline planTimeline"></div></div></div></div>
-  <div id="converterTool" class="toolPanel"><div class="grid2"><div class="card"><h3>Konverter koordinata</h3><textarea id="coordInput" rows="12" placeholder="Zalijepi tekst, BBCode, CSV ili popis koordinata…"></textarea><button id="convertCoords" class="primary">Pronađi i pretvori</button></div><div class="card"><div class="sectionHead"><h3>Čiste koordinate</h3><button id="copyCoords">Kopiraj</button></div><textarea id="coordOutput" rows="12" readonly></textarea><p id="coordCount" class="mut"></p></div></div></div>
-</section>
-</main></div></div>
-
-<div id="accountModal" class="modal hidden"><div class="modalBox"><button class="close" id="closeAccount">×</button><h2 id="accountName"></h2><p id="accountIdentity" class="mut"></p><p>Uloga: <b id="accountRole"></b></p><button id="signOutBtn" class="danger">Odjava / promijeni korisnika</button></div></div>
-<script src="map-data.js"></script><script type="module" src="app.js"></script>
-</body></html>
+  <dialog id="searchDialog"><form method="dialog" class="dialog-card"><div class="dialog-head"><input id="globalSearch" autocomplete="off" data-t-placeholder="searchPlaceholder" placeholder="Igrač, savez, selo ili 12|-34"><button aria-label="Close">×</button></div><div id="searchResults" class="search-results"></div></form></dialog>
+  <div id="toast" class="toast"></div>
+  <script src="map-data.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
