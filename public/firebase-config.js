@@ -1,6 +1,6 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyAmRGvWzmnM33xIwZ5mcYcrlUqQvK8qzq4",
-  authDomain: "travian-m-hq.web.app",
+  authDomain: "travian-m-hq.firebaseapp.com",
   projectId: "travian-m-hq",
   storageBucket: "travian-m-hq.firebasestorage.app",
   messagingSenderId: "413236625922",

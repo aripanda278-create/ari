@@ -1,8 +1,8 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithPopup,setPersistence,browserLocalPersistence,GoogleAuthProvider,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {getFirestore,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,collection,query,where,orderBy,limit,onSnapshot,runTransaction,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js";
-import {EXTRA_I18N} from "./i18n-extra.js?v=20260717-13";
+import {firebaseConfig} from "./firebase-config.js?v=20260717-14";
+import {EXTRA_I18N} from "./i18n-extra.js?v=20260717-14";
 
 const $=id=>document.getElementById(id);
 if(location.hostname==="aripanda278-create.github.io")location.replace(`https://travian-m-hq.web.app/${location.search}${location.hash}`);
