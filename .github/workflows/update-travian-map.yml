@@ -2,7 +2,9 @@ name: Update Travian map
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # GitHub schedule events can be delayed or dropped. One run therefore stays
+    # alive and performs its own five-minute checks for a little over five hours.
+    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -18,30 +20,40 @@ jobs:
     steps:
       - name: Get project
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Download current Travian map
-        run: curl --fail --silent --show-error --retry 3 --output map-new.sql https://ts4.x1.international.travian.com/map.sql
-
-      - name: Check for server changes
-        id: changes
+      - name: Watch Travian map
         shell: bash
-        run: |
-          if cmp -s map-new.sql map-latest.sql; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            mv map-new.sql map-latest.sql
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Build map data
-        if: steps.changes.outputs.changed == 'true'
-        run: node scripts/update-map.mjs map-latest.sql public/map-data.js
-
-      - name: Save updated data
-        if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "Travian Map Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add map-latest.sql public/map-data.js
-          git commit -m "Update Travian server data"
-          git push
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            checks=1
+          else
+            checks=65
+          fi
+
+          for ((i=1; i<=checks; i++)); do
+            echo "Check $i/$checks at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            git pull --rebase origin main
+            curl --fail --silent --show-error --retry 3 \
+              --output map-new.sql \
+              https://ts4.x1.international.travian.com/map.sql
+
+            if cmp -s map-new.sql map-latest.sql; then
+              rm map-new.sql
+              echo "No server changes"
+            else
+              mv map-new.sql map-latest.sql
+              node scripts/update-map.mjs map-latest.sql public/map-data.js
+              git add map-latest.sql public/map-data.js
+              git commit -m "Update Travian server data"
+              git push origin main
+            fi
+
+            if [ "$i" -lt "$checks" ]; then
+              sleep 300
+            fi
+          done
