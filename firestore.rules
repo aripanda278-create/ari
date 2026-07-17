@@ -1,36 +1,93 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function owner() { return signedIn() && request.auth.token.email == 'aripanda278@gmail.com'; }
-    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
-    function admin() { return owner() || (signedIn() && userDoc().data.role == 'admin'); }
+    function signedIn() {
+      return request.auth != null;
+    }
+    function googleUser() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email_verified == true;
+    }
+    function isOwner() {
+      return googleUser() && request.auth.token.email == 'aripanda278@gmail.com';
+    }
+    function userPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+    function hasProfile() {
+      return googleUser() && exists(userPath());
+    }
+    function isAdmin() {
+      return isOwner() || (hasProfile() && get(userPath()).data.role == 'admin');
+    }
+    function ownsExisting() {
+      return hasProfile() && resource.data.ownerUid == request.auth.uid;
+    }
+    function ownsNew() {
+      return hasProfile() && request.resource.data.ownerUid == request.auth.uid;
+    }
+    function ownerUnchanged() {
+      return request.resource.data.ownerUid == resource.data.ownerUid;
+    }
 
     match /users/{uid} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.auth.uid == uid
-        && (request.resource.data.role == 'member' || owner());
-      allow update: if owner() || (signedIn() && request.auth.uid == uid
-        && request.resource.data.role == resource.data.role);
-      allow delete: if owner();
+      allow read: if googleUser() && (request.auth.uid == uid || hasProfile());
+      allow create: if googleUser() && request.auth.uid == uid
+        && request.resource.data.role == (isOwner() ? 'owner' : 'member')
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.avatar is string
+        && request.resource.data.avatar.size() >= 2
+        && request.resource.data.avatar.size() <= 40;
+      allow update: if isOwner() || (hasProfile() && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.email == resource.data.email);
+      allow delete: if false;
     }
-    match /presence/{uid} {
-      allow read: if signedIn();
-      allow create, update, delete: if signedIn() && request.auth.uid == uid;
-    }
+
     match /reservations/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
-        && (admin() || request.resource.data.status == 'planned');
-      allow update, delete: if admin() || (signedIn() && resource.data.ownerUid == request.auth.uid && resource.data.status == 'planned');
+      allow read: if hasProfile();
+      allow create: if ownsNew() && request.resource.data.status == 'planned';
+      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow delete: if false;
     }
-    match /diplomacy/{id} { allow read: if signedIn(); allow write: if admin(); }
-    match /operations/{id} { allow read: if signedIn(); allow write: if admin(); }
-    match /activity/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
-      allow update, delete: if owner();
+    match /plans/{id} {
+      allow read: if hasProfile();
+      allow create: if ownsNew();
+      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow delete: if false;
     }
-    match /{document=**} { allow read, write: if false; }
+    match /troops/{id} {
+      allow read: if isAdmin() || ownsExisting();
+      allow create: if ownsNew();
+      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow delete: if false;
+    }
+    match /reports/{id} {
+      allow read: if hasProfile();
+      allow create: if ownsNew();
+      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow delete: if false;
+    }
+    match /diplomacy/{id} {
+      allow read: if hasProfile();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+    match /operations/{id} {
+      allow read: if hasProfile();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+    match /audit/{id} {
+      allow read: if isAdmin();
+      allow create: if hasProfile()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action is string;
+      allow update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
