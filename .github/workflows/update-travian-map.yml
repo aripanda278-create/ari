@@ -6,6 +6,12 @@ on:
     # alive and performs its own five-minute checks for a little over five hours.
     - cron: "17 * * * *"
   workflow_dispatch:
+    inputs:
+      continuous:
+        description: Keep checking every five minutes
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -29,7 +35,7 @@ jobs:
           git config user.name "Travian Map Bot"
           git config user.email "actions@users.noreply.github.com"
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.continuous }}" = "false" ]; then
             checks=1
           else
             checks=65
