@@ -1,11 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
     function googleUser() {
-      return signedIn()
+      return request.auth != null
         && request.auth.token.firebase.sign_in_provider == 'google.com'
         && request.auth.token.email_verified == true;
     }
@@ -21,69 +18,121 @@ service cloud.firestore {
     function isAdmin() {
       return isOwner() || (hasProfile() && get(userPath()).data.role == 'admin');
     }
-    function ownsExisting() {
-      return hasProfile() && resource.data.ownerUid == request.auth.uid;
+    function text(value, max) {
+      return value is string && value.size() > 0 && value.size() <= max;
     }
-    function ownsNew() {
-      return hasProfile() && request.resource.data.ownerUid == request.auth.uid;
+    function count(value) {
+      return value is int && value >= 0 && value <= 1000000000;
     }
-    function ownerUnchanged() {
-      return request.resource.data.ownerUid == resource.data.ownerUid;
+    function validCreateMeta() {
+      return hasProfile()
+        && request.resource.data.ownerUid == request.auth.uid
+        && text(request.resource.data.ownerAvatar, 40)
+        && request.resource.data.archived == false
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+    function validArchive() {
+      return request.resource.data.ownerUid == resource.data.ownerUid
+        && resource.data.archived == false
+        && request.resource.data.archived == true
+        && request.resource.data.archivedBy == request.auth.uid
+        && request.resource.data.archivedAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['archived', 'archivedBy', 'archivedAt', 'updatedAt'])
+        && (isAdmin() || resource.data.ownerUid == request.auth.uid);
     }
 
     match /users/{uid} {
-      allow read: if googleUser() && (request.auth.uid == uid || hasProfile());
+      allow read: if googleUser() && (request.auth.uid == uid || isAdmin());
       allow create: if googleUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['avatar','email','role','createdAt','lastLoginAt'])
         && request.resource.data.role == (isOwner() ? 'owner' : 'member')
         && request.resource.data.email == request.auth.token.email
-        && request.resource.data.avatar is string
+        && text(request.resource.data.avatar, 40)
         && request.resource.data.avatar.size() >= 2
-        && request.resource.data.avatar.size() <= 40;
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.lastLoginAt is timestamp;
       allow update: if isOwner() || (hasProfile() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar','lastLoginAt'])
         && request.resource.data.role == resource.data.role
-        && request.resource.data.email == resource.data.email);
+        && request.resource.data.email == resource.data.email
+        && text(request.resource.data.avatar, 40)
+        && request.resource.data.avatar.size() >= 2
+        && request.resource.data.lastLoginAt is timestamp);
       allow delete: if false;
     }
 
     match /reservations/{id} {
       allow read: if hasProfile();
-      allow create: if ownsNew() && request.resource.data.status == 'planned';
-      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow create: if validCreateMeta()
+        && request.resource.data.keys().hasOnly(['x','y','player','status','ownerUid','ownerAvatar','archived','createdAt','updatedAt'])
+        && request.resource.data.x is int && request.resource.data.x >= -400 && request.resource.data.x <= 400
+        && request.resource.data.y is int && request.resource.data.y >= -400 && request.resource.data.y <= 400
+        && text(request.resource.data.player, 40)
+        && request.resource.data.status == 'planned';
+      allow update: if validArchive();
       allow delete: if false;
     }
     match /plans/{id} {
       allow read: if hasProfile();
-      allow create: if ownsNew();
-      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow create: if validCreateMeta()
+        && request.resource.data.keys().hasOnly(['type','name','player','from','to','arrival','departure','ownerUid','ownerAvatar','archived','createdAt','updatedAt'])
+        && request.resource.data.type in ['attack','defense','settling']
+        && text(request.resource.data.name, 120) && text(request.resource.data.player, 40)
+        && text(request.resource.data.from, 9) && text(request.resource.data.to, 9)
+        && text(request.resource.data.arrival, 40) && text(request.resource.data.departure, 40);
+      allow update: if validArchive();
       allow delete: if false;
     }
     match /troops/{id} {
-      allow read: if isAdmin() || ownsExisting();
-      allow create: if ownsNew();
-      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow read: if isAdmin() || (hasProfile() && resource.data.ownerUid == request.auth.uid);
+      allow create: if validCreateMeta()
+        && request.resource.data.keys().hasOnly(['player','role','inf','cav','siege','scout','total','ownerUid','ownerAvatar','archived','createdAt','updatedAt'])
+        && text(request.resource.data.player, 40)
+        && request.resource.data.role in ['OFF','DEF','MIX']
+        && count(request.resource.data.inf) && count(request.resource.data.cav)
+        && count(request.resource.data.siege) && count(request.resource.data.scout)
+        && request.resource.data.total == request.resource.data.inf + request.resource.data.cav + request.resource.data.siege + request.resource.data.scout;
+      allow update: if validArchive();
       allow delete: if false;
     }
     match /reports/{id} {
       allow read: if hasProfile();
-      allow create: if ownsNew();
-      allow update: if ownerUnchanged() && (isAdmin() || ownsExisting());
+      allow create: if validCreateMeta()
+        && request.resource.data.keys().hasOnly(['player','coord','inf','cav','siege','total','date','ownerUid','ownerAvatar','archived','createdAt','updatedAt'])
+        && text(request.resource.data.player, 40) && text(request.resource.data.coord, 9)
+        && text(request.resource.data.date, 20)
+        && count(request.resource.data.inf) && count(request.resource.data.cav) && count(request.resource.data.siege)
+        && request.resource.data.total == request.resource.data.inf + request.resource.data.cav + request.resource.data.siege;
+      allow update: if validArchive();
       allow delete: if false;
     }
     match /diplomacy/{id} {
       allow read: if hasProfile();
-      allow create, update: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['tag','relation','updatedBy','updatedAt'])
+        && text(request.resource.data.tag, 40)
+        && request.resource.data.relation in ['neutral','ally','nap','enemy']
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt is timestamp;
       allow delete: if false;
     }
     match /operations/{id} {
       allow read: if hasProfile();
-      allow create, update: if isAdmin();
-      allow delete: if false;
+      allow write: if false;
     }
     match /audit/{id} {
       allow read: if isAdmin();
       allow create: if hasProfile()
+        && request.resource.data.keys().hasOnly(['actorUid','actorAvatar','action','kind','targetId','createdAt'])
         && request.resource.data.actorUid == request.auth.uid
-        && request.resource.data.action is string;
+        && text(request.resource.data.actorAvatar, 40)
+        && request.resource.data.action in ['create','update','archive']
+        && text(request.resource.data.kind, 30)
+        && text(request.resource.data.targetId, 160)
+        && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
     match /{document=**} {

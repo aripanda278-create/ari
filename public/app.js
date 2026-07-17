@@ -1,8 +1,8 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,signInWithRedirect,getRedirectResult,GoogleAuthProvider,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,addDoc,updateDoc,collection,query,where,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import {firebaseConfig} from "./firebase-config.js";
-import {EXTRA_I18N} from "./i18n-extra.js";
+import {EXTRA_I18N} from "./i18n-extra.js?v=20260717-7";
 
 const $=id=>document.getElementById(id);
 if("scrollRestoration" in history)history.scrollRestoration="manual";
@@ -21,8 +21,8 @@ Object.assign(I.hr,{transparency:"TRANSPARENTNOST",tournament:"Trg turnira %",ou
 Object.assign(I.en,{transparency:"TRANSPARENCY",tournament:"Tournament Square %",output:"Output",role:"Role",infantry:"Infantry",cavalry:"Cavalry",siege:"Siege",scouts:"Scouts",total:"Total",type:"Type",route:"Route",units:"units",populationShort:"population",invalidCoords:"Check the coordinates. Use X|Y from -400 to 400.",requiredFields:"Complete the required fields.",alreadyReserved:"This location is already reserved.",signOutConfirm:"Do you want to sign out?",own:"OWN",close:"Close"});
 Object.assign(I.hr,{oasis:"Oaza",oases:"Oaze",cropper9:"9c cropper",cropper15:"15c cropper",mapCollector:"Travian kolektor karte",collectorHelp:"Instaliraj kolektor, normalno pregledavaj Travian kartu i zatim izvezi prikupljena polja.",downloadCollector:"Preuzmi kolektor",importLocations:"Uvezi podatke",clearLocations:"Obriši uvezena polja",pasteJson:"Ili zalijepi JSON kolektora",collectedTiles:"Prikupljena polja",nearbyOases:"Oaze u dosegu",cropBonus:"Žitni bonus",resourceBonus:"Ukupni bonus",openOnMap:"Prikaži na karti",imported:"Podaci karte su uvezeni.",invalidImport:"Datoteka kolektora nije valjana.",collectorPrivacy:"Kolektor ne šalje lozinku niti radi dodatne zahtjeve; bilježi samo polja koja karta već učita.",wood:"Drvo",clay:"Glina",iron:"Željezo",cropResource:"Žito",unknownBonus:"Nepoznat bonus"});
 Object.assign(I.en,{oasis:"Oasis",oases:"Oases",cropper9:"9c cropper",cropper15:"15c cropper",mapCollector:"Travian map collector",collectorHelp:"Install the collector, browse the Travian map normally, then export the collected tiles.",downloadCollector:"Download collector",importLocations:"Import data",clearLocations:"Clear imported tiles",pasteJson:"Or paste collector JSON",collectedTiles:"Collected tiles",nearbyOases:"Oases in range",cropBonus:"Crop bonus",resourceBonus:"Total bonus",openOnMap:"Show on map",imported:"Map data imported.",invalidImport:"The collector file is not valid.",collectorPrivacy:"The collector does not send your password or make extra requests; it only records tiles already loaded by the map.",wood:"Wood",clay:"Clay",iron:"Iron",cropResource:"Crop",unknownBonus:"Unknown bonus"});
-Object.assign(I.hr,{avatarRequired:"Upiši avatar ime.",openingGoogle:"Otvaram sigurnu Google prijavu…",deleteConfirm:"Ova radnja briše lokalni zapis. Želiš li sigurno nastaviti?",permissionDenied:"Nemaš ovlasti za ovu radnju.",member:"ČLAN",admin:"ADMIN",ownerRole:"VLASNIK"});
-Object.assign(I.en,{avatarRequired:"Enter avatar name.",openingGoogle:"Opening secure Google sign-in…",deleteConfirm:"This action deletes the local record. Continue?",permissionDenied:"You do not have permission for this action.",member:"MEMBER",admin:"ADMIN",ownerRole:"OWNER"});
+Object.assign(I.hr,{avatarRequired:"Avatar ime mora imati od 2 do 40 znakova.",openingGoogle:"Otvaram sigurnu Google prijavu…",deleteConfirm:"Zapis će biti premješten u arhivu. Želiš li nastaviti?",permissionDenied:"Nemaš ovlasti za ovu radnju.",member:"ČLAN",admin:"ADMIN",ownerRole:"VLASNIK",syncError:"Sinkronizacija nije uspjela. Pokušaj ponovno.",savedCloud:"Spremljeno u zajedničku bazu."});
+Object.assign(I.en,{avatarRequired:"Avatar name must contain 2 to 40 characters.",openingGoogle:"Opening secure Google sign-in…",deleteConfirm:"The record will be moved to the archive. Continue?",permissionDenied:"You do not have permission for this action.",member:"MEMBER",admin:"ADMIN",ownerRole:"OWNER",syncError:"Synchronization failed. Please try again.",savedCloud:"Saved to the shared database."});
 for(const [code,strings] of Object.entries(EXTRA_I18N))I[code]={...I.en,...strings};
 const t=k=>{document.documentElement.lang=state.lang;document.documentElement.dir=state.lang==="ar"?"rtl":"ltr";return I[state.lang]?.[k]||I.en[k]||k};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -120,10 +120,37 @@ async function loadSecurityProfile(user){
   state.user=user;const ref=doc(db,"users",user.uid),snap=await getDoc(ref);
   if(!snap.exists())await setDoc(ref,{avatar:state.avatar,email:user.email,role:user.email==="aripanda278@gmail.com"?"owner":"member",createdAt:serverTimestamp(),lastLoginAt:serverTimestamp()});
   else await setDoc(ref,{avatar:state.avatar,lastLoginAt:serverTimestamp()},{merge:true});
-  const fresh=await getDoc(ref);state.role=fresh.data()?.role||"member";
+  const fresh=await getDoc(ref);state.role=fresh.data()?.role||"member";await migrateLocalData();subscribeShared();
 }
 const canManage=record=>state.role==="owner"||state.role==="admin"||Boolean(record?.ownerUid&&record.ownerUid===state.user?.uid);
 function approveDelete(record){if(!canManage(record)){toast(t("permissionDenied"));return false}return confirm(t("deleteConfirm"))}
+
+const sharedCollections={reservations:"reservations",plans:"plans",troops:"troops",reports:"reports"};
+const cleanText=(value,max=120)=>String(value??"").trim().slice(0,max);
+const baseRecord=()=>({ownerUid:state.user.uid,ownerAvatar:cleanText(state.avatar,40),archived:false,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+async function writeAudit(action,kind,targetId){await addDoc(collection(db,"audit"),{actorUid:state.user.uid,actorAvatar:cleanText(state.avatar,40),action,kind,targetId:cleanText(targetId,160),createdAt:serverTimestamp()})}
+function refreshShared(kind){if(kind==="plans"&&["plans","operations"].includes(state.view))renderView();else if(kind==="troops"&&state.view==="tools"&&state.tool==="troops")renderToolBody();else if(kind==="reports"&&state.view==="reports")renderReports();else if(kind==="reservations"&&state.view==="map")drawMap()}
+function subscribeShared(){
+  for(const [kind,path] of Object.entries(sharedCollections)){
+    const source=kind==="troops"&&!(["owner","admin"].includes(state.role))?query(collection(db,path),where("ownerUid","==",state.user.uid)):collection(db,path);
+    onSnapshot(source,snap=>{state[kind]=snap.docs.map(x=>({id:x.id,...x.data()})).filter(x=>x.archived!==true);refreshShared(kind)},()=>toast(t("syncError")));
+  }
+  onSnapshot(collection(db,"diplomacy"),snap=>{state.relation={};for(const x of snap.docs){const v=x.data();if(v.tag&&v.relation)state.relation[v.tag]=v.relation}if(state.view==="diplomacy")renderDiplomacy();if(state.view==="map")drawMap()},()=>toast(t("syncError")));
+}
+function migratedRecord(kind,x){
+  if(kind==="reservations")return{x:Number(x.x),y:Number(x.y),player:cleanText(x.player||state.avatar,40),status:"planned"};
+  if(kind==="plans")return{type:["attack","defense","settling"].includes(x.type)?x.type:"attack",name:cleanText(x.name),player:cleanText(x.player,40),from:cleanText(x.from,9),to:cleanText(x.to,9),arrival:cleanText(x.arrival,40),departure:cleanText(x.departure,40)};
+  if(kind==="troops")return{player:cleanText(x.player,40),role:["OFF","DEF","MIX"].includes(x.role)?x.role:"MIX",inf:Number(x.inf)||0,cav:Number(x.cav)||0,siege:Number(x.siege)||0,scout:Number(x.scout)||0,total:Number(x.total)||0};
+  return{player:cleanText(x.player,40),coord:cleanText(x.coord,9),inf:Number(x.inf)||0,cav:Number(x.cav)||0,siege:Number(x.siege)||0,total:Number(x.total)||0,date:cleanText(x.date,20)};
+}
+async function migrateLocalData(){
+  const marker=`mhq_cloud_migrated_${state.user.uid}`;if(localStorage.getItem(marker))return;
+  for(const kind of Object.keys(sharedCollections))for(const x of state[kind])try{await addDoc(collection(db,sharedCollections[kind]),{...migratedRecord(kind,x),...baseRecord()})}catch{}
+  if(["owner","admin"].includes(state.role))for(const [tag,relationValue] of Object.entries(state.relation))try{await setDoc(doc(db,"diplomacy",encodeURIComponent(tag)),{tag:cleanText(tag,40),relation:relationValue,updatedBy:state.user.uid,updatedAt:serverTimestamp()})}catch{}
+  localStorage.setItem(marker,new Date().toISOString());
+}
+async function createShared(kind,data){const ref=await addDoc(collection(db,sharedCollections[kind]),{...data,...baseRecord()});await writeAudit("create",kind,ref.id)}
+async function archiveShared(kind,record){if(!record?.id||!approveDelete(record))return;await updateDoc(doc(db,sharedCollections[kind],record.id),{archived:true,archivedAt:serverTimestamp(),archivedBy:state.user.uid,updatedAt:serverTimestamp()});await writeAudit("archive",kind,record.id)}
 
 function startUi(){
   $("gate").classList.add("hidden");
@@ -135,10 +162,16 @@ function startUi(){
   applyLanguage();
   nav((location.hash.slice(1)&&$(location.hash.slice(1)))?location.hash.slice(1):"dashboard");
 }
-$("googleLogin").onclick=async()=>{state.avatar=$("avatarInput").value.trim();state.lang=$("languageInput").value;if(!state.avatar)return $("gateStatus").textContent=t("avatarRequired");localStorage.setItem("mhq_avatar",state.avatar);localStorage.setItem("mhq_lang",state.lang);$("gateStatus").textContent=t("openingGoogle");try{await signInWithRedirect(auth,new GoogleAuthProvider())}catch(e){$("gateStatus").textContent=`Google: ${e.code||e.message}`}}
+$("googleLogin").onclick=async()=>{state.avatar=$("avatarInput").value.trim();state.lang=$("languageInput").value;if(state.avatar.length<2||state.avatar.length>40)return $("gateStatus").textContent=t("avatarRequired");localStorage.setItem("mhq_avatar",state.avatar);localStorage.setItem("mhq_lang",state.lang);$("gateStatus").textContent=t("openingGoogle");try{await signInWithRedirect(auth,new GoogleAuthProvider())}catch(e){$("gateStatus").textContent=`Google: ${e.code||e.message}`}}
 getRedirectResult(auth).catch(e=>{$("gateStatus").textContent=`Google: ${e.code||e.message}`});
 onAuthStateChanged(auth,async u=>{if(!u)return;const google=u.emailVerified&&u.providerData.some(p=>p.providerId==="google.com");if(!google)return signOut(auth);try{await loadSecurityProfile(u);startUi()}catch(e){$("gateStatus").textContent=`Security: ${e.code||e.message}`;await signOut(auth)}});
 document.querySelectorAll("#mainNav button").forEach(b=>b.onclick=()=>nav(b.dataset.view));$("languageTop").onchange=e=>{state.lang=e.target.value;localStorage.setItem("mhq_lang",state.lang);applyLanguage()};$("languageInput").onchange=e=>{state.lang=e.target.value;localStorage.setItem("mhq_lang",state.lang);applyLanguage()};$("themeToggle").onclick=()=>{state.theme=state.theme==="dark"?"light":"dark";localStorage.setItem("mhq_theme",state.theme);document.body.classList.toggle("dark",state.theme==="dark")};document.body.classList.toggle("dark",state.theme==="dark");$("menuToggle").onclick=()=>$("sidebar").classList.toggle("open");$("globalSearchButton").onclick=openSearch;document.addEventListener("keydown",e=>{if(e.key==="/"&&!/input|textarea/i.test(document.activeElement.tagName)){e.preventDefault();openSearch()}if(e.key==="Escape")$("sidebar").classList.remove("open")});$("globalSearch").oninput=e=>{$("searchResults").innerHTML=globalSearch(e.target.value).map((r,i)=>`<button type="button" class="search-result" data-result="${i}"><span><b>${esc(r.title)}</b><small style="display:block;color:var(--muted)">${esc(r.sub)}</small></span><span>${r.type}</span></button>`).join("");const results=globalSearch(e.target.value);document.querySelectorAll("[data-result]").forEach(b=>b.onclick=()=>{const r=results[+b.dataset.result];$("searchDialog").close();if(r.type==="alliance"){sessionStorage.setItem("mhq_alliance",r.a.tag);nav("alliance")}else{state.selected=r.v;state.map.cx=r.v.x;state.map.cy=r.v.y;state.map.scale=30;nav("map")}})};$("profileButton").onclick=()=>{if(confirm(t("signOutConfirm")))signOut(auth).finally(()=>location.reload())};window.addEventListener("hashchange",()=>{const view=location.hash.slice(1);if(view&&view!==state.view&&$(view))nav(view)});
-document.addEventListener("click",e=>{const b=e.target.closest?.("[data-delplan],[data-deltroop],[data-delreport]");if(!b)return;const pair=b.dataset.delplan!==undefined?[state.plans,+b.dataset.delplan]:b.dataset.deltroop!==undefined?[state.troops,+b.dataset.deltroop]:[state.reports,+b.dataset.delreport];if(!approveDelete(pair[0][pair[1]])){e.preventDefault();e.stopImmediatePropagation()}},true);
-document.addEventListener("change",e=>{if(e.target.matches?.("[data-rel]")&&!(["owner","admin"].includes(state.role))){e.preventDefault();e.stopImmediatePropagation();toast(t("permissionDenied"));renderDiplomacy()}},true);
+document.addEventListener("submit",async e=>{const id=e.target.id;if(!["planForm","troopForm","reportForm"].includes(id))return;e.preventDefault();e.stopImmediatePropagation();try{
+  if(id==="planForm"){const a=coord($("planFrom").value),b=coord($("planTo").value),arrival=new Date($("planArrival").value),speed=+$("planSpeed").value;if(!a||!b||!speed||!Number.isFinite(arrival.getTime()))return toast(t("invalidCoords"));const sec=dist(a,b)/speed*3600;await createShared("plans",{type:document.querySelector("[data-plan].active")?.dataset.plan||"attack",name:cleanText($("planName").value),player:cleanText($("planPlayer").value,40),from:`${a.x}|${a.y}`,to:`${b.x}|${b.y}`,arrival:arrival.toISOString(),departure:new Date(arrival-sec*1000).toISOString()})}
+  if(id==="troopForm"){const player=cleanText($("troopPlayer").value,40),inf=+$("troopInf").value||0,cav=+$("troopCav").value||0,siege=+$("troopSiege").value||0,scout=+$("troopScout").value||0;if(!player)return toast(t("requiredFields"));await createShared("troops",{player,role:$("troopRole").value,inf,cav,siege,scout,total:inf+cav+siege+scout})}
+  if(id==="reportForm"){const c=coord($("reportCoord").value),player=cleanText($("reportPlayer").value,40),reportDate=$("reportDate").value,inf=+$("reportInf").value||0,cav=+$("reportCav").value||0,siege=+$("reportSiege").value||0;if(!c||!player||!reportDate)return toast(t("requiredFields"));await createShared("reports",{player,coord:`${c.x}|${c.y}`,inf,cav,siege,total:inf+cav+siege,date:reportDate})}
+  toast(t("savedCloud"));e.target.reset()
+}catch{toast(t("syncError"))}},true);
+document.addEventListener("click",async e=>{const b=e.target.closest?.("[data-delplan],[data-deltroop],[data-delreport],#reserveTile");if(!b)return;e.preventDefault();e.stopImmediatePropagation();try{if(b.id==="reserveTile"){const v=state.selected;if(!v||state.reservations.some(r=>r.x===v.x&&r.y===v.y))return toast(t("alreadyReserved"));await createShared("reservations",{x:v.x,y:v.y,player:cleanText(state.avatar,40),status:"planned"});return toast(t("savedCloud"))}const pair=b.dataset.delplan!==undefined?["plans",state.plans,+b.dataset.delplan]:b.dataset.deltroop!==undefined?["troops",state.troops,+b.dataset.deltroop]:["reports",state.reports,+b.dataset.delreport];await archiveShared(pair[0],pair[1][pair[2]])}catch{toast(t("syncError"))}},true);
+document.addEventListener("change",async e=>{if(!e.target.matches?.("[data-rel]"))return;e.preventDefault();e.stopImmediatePropagation();if(!(["owner","admin"].includes(state.role))){toast(t("permissionDenied"));return renderDiplomacy()}try{const tag=e.target.dataset.rel,relationValue=e.target.value;await setDoc(doc(db,"diplomacy",encodeURIComponent(tag)),{tag:cleanText(tag,40),relation:relationValue,updatedBy:state.user.uid,updatedAt:serverTimestamp()});await writeAudit("update","diplomacy",tag);toast(t("savedCloud"))}catch{toast(t("syncError"))}},true);
 $("avatarInput").value=state.avatar;applyLanguage();
