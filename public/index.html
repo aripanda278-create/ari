@@ -8,7 +8,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com; frame-src https://travian-m-hq.firebaseapp.com https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com https://*.firebaseapp.com; upgrade-insecure-requests">
   <title>M HQ</title>
   <link rel="icon" href="icon.svg">
-  <link rel="stylesheet" href="style.css?v=20260717-7">
+  <link rel="stylesheet" href="style.css?v=20260717-9">
 </head>
 <body>
   <section id="gate" class="gate">
@@ -51,6 +51,7 @@
         <button data-view="operations"><span>⚔</span><b data-t="operations">Operacije</b></button>
         <button data-view="reports"><span>▤</span><b data-t="reports">Izvještaji</b></button>
         <button data-view="diplomacy"><span>⚑</span><b data-t="diplomacy">Diplomacija</b></button>
+        <button id="adminNav" data-view="admin" class="hidden"><span>▣</span><b data-t="administration">Administracija</b></button>
       </nav>
       <div class="sidebar-foot"><span id="worldName">ts4.x1</span><small data-t="world">Travian svijet</small></div>
     </aside>
@@ -64,12 +65,13 @@
       <section id="operations" class="view"></section>
       <section id="reports" class="view"></section>
       <section id="diplomacy" class="view"></section>
+      <section id="admin" class="view"></section>
     </main>
   </div>
 
   <dialog id="searchDialog"><form method="dialog" class="dialog-card"><div class="dialog-head"><input id="globalSearch" autocomplete="off" data-t-placeholder="searchPlaceholder" placeholder="Igrač, savez, selo ili 12|-34"><button data-t-aria="close" aria-label="Zatvori">×</button></div><div id="searchResults" class="search-results"></div></form></dialog>
   <div id="toast" class="toast"></div>
-  <script src="map-data.js?v=20260717-7"></script>
-  <script type="module" src="app.js?v=20260717-7"></script>
+  <script src="map-data.js?v=20260717-9"></script>
+  <script type="module" src="app.js?v=20260717-9"></script>
 </body>
 </html>

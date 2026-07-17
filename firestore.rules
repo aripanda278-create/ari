@@ -43,6 +43,17 @@ service cloud.firestore {
           .hasOnly(['archived', 'archivedBy', 'archivedAt', 'updatedAt'])
         && (isAdmin() || resource.data.ownerUid == request.auth.uid);
     }
+    function validRestore() {
+      return isAdmin()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && resource.data.archived == true
+        && request.resource.data.archived == false
+        && request.resource.data.restoredBy == request.auth.uid
+        && request.resource.data.restoredAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['archived', 'restoredBy', 'restoredAt', 'updatedAt']);
+    }
 
     match /users/{uid} {
       allow read: if googleUser() && (request.auth.uid == uid || isAdmin());
@@ -54,7 +65,14 @@ service cloud.firestore {
         && request.resource.data.avatar.size() >= 2
         && request.resource.data.createdAt is timestamp
         && request.resource.data.lastLoginAt is timestamp;
-      allow update: if isOwner() || (hasProfile() && request.auth.uid == uid
+      allow update: if (isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar','role','lastLoginAt'])
+        && request.resource.data.role == (uid == request.auth.uid ? 'owner' : request.resource.data.role)
+        && (uid == request.auth.uid || request.resource.data.role in ['member','admin'])
+        && request.resource.data.email == resource.data.email
+        && text(request.resource.data.avatar, 40)
+        && request.resource.data.avatar.size() >= 2)
+        || (hasProfile() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avatar','lastLoginAt'])
         && request.resource.data.role == resource.data.role
         && request.resource.data.email == resource.data.email
@@ -67,12 +85,18 @@ service cloud.firestore {
     match /reservations/{id} {
       allow read: if hasProfile();
       allow create: if validCreateMeta()
-        && request.resource.data.keys().hasOnly(['x','y','player','status','ownerUid','ownerAvatar','archived','createdAt','updatedAt'])
+        && request.resource.data.keys().hasOnly(['x','y','lockId','player','status','ownerUid','ownerAvatar','archived','createdAt','updatedAt'])
         && request.resource.data.x is int && request.resource.data.x >= -400 && request.resource.data.x <= 400
         && request.resource.data.y is int && request.resource.data.y >= -400 && request.resource.data.y <= 400
+        && text(request.resource.data.lockId, 30)
         && text(request.resource.data.player, 40)
-        && request.resource.data.status == 'planned';
-      allow update: if validArchive();
+        && request.resource.data.status == 'planned'
+        && getAfter(/databases/$(database)/documents/reservationLocks/$(request.resource.data.lockId)).data.active == true
+        && getAfter(/databases/$(database)/documents/reservationLocks/$(request.resource.data.lockId)).data.reservationId == id
+        && getAfter(/databases/$(database)/documents/reservationLocks/$(request.resource.data.lockId)).data.ownerUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/reservationLocks/$(request.resource.data.lockId)).data.x == request.resource.data.x
+        && getAfter(/databases/$(database)/documents/reservationLocks/$(request.resource.data.lockId)).data.y == request.resource.data.y;
+      allow update: if validArchive() || validRestore();
       allow delete: if false;
     }
     match /plans/{id} {
@@ -83,7 +107,7 @@ service cloud.firestore {
         && text(request.resource.data.name, 120) && text(request.resource.data.player, 40)
         && text(request.resource.data.from, 9) && text(request.resource.data.to, 9)
         && text(request.resource.data.arrival, 40) && text(request.resource.data.departure, 40);
-      allow update: if validArchive();
+      allow update: if validArchive() || validRestore();
       allow delete: if false;
     }
     match /troops/{id} {
@@ -95,7 +119,7 @@ service cloud.firestore {
         && count(request.resource.data.inf) && count(request.resource.data.cav)
         && count(request.resource.data.siege) && count(request.resource.data.scout)
         && request.resource.data.total == request.resource.data.inf + request.resource.data.cav + request.resource.data.siege + request.resource.data.scout;
-      allow update: if validArchive();
+      allow update: if validArchive() || validRestore();
       allow delete: if false;
     }
     match /reports/{id} {
@@ -106,7 +130,7 @@ service cloud.firestore {
         && text(request.resource.data.date, 20)
         && count(request.resource.data.inf) && count(request.resource.data.cav) && count(request.resource.data.siege)
         && request.resource.data.total == request.resource.data.inf + request.resource.data.cav + request.resource.data.siege;
-      allow update: if validArchive();
+      allow update: if validArchive() || validRestore();
       allow delete: if false;
     }
     match /diplomacy/{id} {
@@ -119,6 +143,37 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp;
       allow delete: if false;
     }
+    match /reservationLocks/{id} {
+      allow read: if hasProfile();
+      allow create: if hasProfile()
+        && request.resource.data.keys().hasOnly(['x','y','active','reservationId','ownerUid','updatedAt'])
+        && request.resource.data.active == true
+        && request.resource.data.x is int && request.resource.data.x >= -400 && request.resource.data.x <= 400
+        && request.resource.data.y is int && request.resource.data.y >= -400 && request.resource.data.y <= 400
+        && text(request.resource.data.reservationId, 160)
+        && (request.resource.data.ownerUid == request.auth.uid || isAdmin())
+        && request.resource.data.updatedAt is timestamp
+        && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.ownerUid == request.resource.data.ownerUid
+        && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.x == request.resource.data.x
+        && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.y == request.resource.data.y;
+      allow update: if hasProfile()
+        && request.resource.data.keys().hasOnly(['x','y','active','reservationId','ownerUid','updatedAt'])
+        && request.resource.data.x == resource.data.x
+        && request.resource.data.y == resource.data.y
+        && request.resource.data.updatedAt is timestamp
+        && ((resource.data.active == true && request.resource.data.active == false
+          && request.resource.data.reservationId == resource.data.reservationId
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && (isAdmin() || resource.data.ownerUid == request.auth.uid)
+          && getAfter(/databases/$(database)/documents/reservations/$(resource.data.reservationId)).data.archived == true)
+        || (resource.data.active == false && request.resource.data.active == true
+          && (request.resource.data.ownerUid == request.auth.uid || isAdmin())
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.archived == false
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.ownerUid == request.resource.data.ownerUid
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.x == request.resource.data.x
+          && getAfter(/databases/$(database)/documents/reservations/$(request.resource.data.reservationId)).data.y == request.resource.data.y));
+      allow delete: if false;
+    }
     match /operations/{id} {
       allow read: if hasProfile();
       allow write: if false;
@@ -129,7 +184,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['actorUid','actorAvatar','action','kind','targetId','createdAt'])
         && request.resource.data.actorUid == request.auth.uid
         && text(request.resource.data.actorAvatar, 40)
-        && request.resource.data.action in ['create','update','archive']
+        && request.resource.data.action in ['create','update','archive','restore']
         && text(request.resource.data.kind, 30)
         && text(request.resource.data.targetId, 160)
         && request.resource.data.createdAt is timestamp;
