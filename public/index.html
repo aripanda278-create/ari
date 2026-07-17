@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f4f1e8">
   <title>M HQ</title>
   <link rel="icon" href="icon.svg">
-  <link rel="stylesheet" href="style.css?v=20260717-4">
+  <link rel="stylesheet" href="style.css?v=20260717-5">
 </head>
 <body>
   <section id="gate" class="gate">
@@ -14,12 +14,11 @@
       <div class="brand-mark">M</div>
       <p class="eyebrow" data-t="allianceCommand">ALLIANCE COMMAND</p>
       <h1>M HQ</h1>
-      <p class="lead" data-t="loginIntro">Jedno mjesto za kartu, savez, planove i operacije.</p>
+      <p class="lead" data-t="loginIntro">Upiši Travian avatar i potvrdi identitet Google računom.</p>
       <label><span data-t="avatar">Avatar ime</span><input id="avatarInput" autocomplete="nickname" placeholder="Pacov"></label>
       <label><span data-t="language">Jezik</span><select id="languageInput"><option value="hr">Hrvatski</option><option value="en">English</option></select></label>
       <div class="gate-actions">
-        <button id="memberLogin" class="primary" data-t="enterMember">Uđi kao član</button>
-        <button id="googleLogin" class="secondary" data-t="googleLogin">Google prijava</button>
+        <button id="googleLogin" class="primary" data-t="googleLogin">Nastavi s Google računom</button>
       </div>
       <p id="gateStatus" class="status"></p>
     </div>
@@ -68,7 +67,7 @@
 
   <dialog id="searchDialog"><form method="dialog" class="dialog-card"><div class="dialog-head"><input id="globalSearch" autocomplete="off" data-t-placeholder="searchPlaceholder" placeholder="Igrač, savez, selo ili 12|-34"><button data-t-aria="close" aria-label="Zatvori">×</button></div><div id="searchResults" class="search-results"></div></form></dialog>
   <div id="toast" class="toast"></div>
-  <script src="map-data.js?v=20260717-4"></script>
-  <script type="module" src="app.js?v=20260717-4"></script>
+  <script src="map-data.js?v=20260717-5"></script>
+  <script type="module" src="app.js?v=20260717-5"></script>
 </body>
 </html>
